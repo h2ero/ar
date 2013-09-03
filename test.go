@@ -54,4 +54,11 @@ func main() {
     test = ar.New()
     test.Delete("t1").Where("id", "=", "3").Build()
     t(test.Sql, num)
+
+    //test 9. join(expr)
+    test = ar.New()
+    subSql := " (SELECT `in_t1`.`group_id`, SUM(CASE `in_t1`.`delete_flag` WHEN 0 THEN 1 ELSE 0 END) as count'FROM `hoges` AS `in_t1`  GROUP BY `in_t1`.`group_id`) as `t1`"
+    test.Select("id").From("t1").Join(ar.Expr(subSql)).On("`t0`.`id`", "=", "`t1`.group_id").Build()
+    t(test.Sql, num)
+
 }

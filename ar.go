@@ -14,7 +14,7 @@ type where struct{
     value   interface{}
 }
 type join struct{
-    table    string
+    table    interface{}
     joinType string
     on       [][]interface{}
 }
@@ -131,7 +131,7 @@ func (a *ar) Delete(talbe string) *ar{
     return a
 }
 
-func (a *ar) Join(table string, joinType ...string) *ar{
+func (a *ar) Join(table interface{}, joinType ...string) *ar{
     var tmp  join 
     tmp.table = table
     if joinType != nil {
@@ -223,11 +223,11 @@ func (a *ar) buildJoin() *ar{
     // join
     if len(a.join) != 0  {
         for jk,jv := range a.join {
-            a.Sql += Concat(jv.joinType, "JOIN", a.quote(jv.table,a.quoteReservedChar))
+            a.Sql += Concat(jv.joinType, "JOIN", a.buildExpr(jv.table))
             if len(a.join[jk].on) != 0 {
                 a.Sql += Concat("ON")
                 for _, ov := range a.join[jk].on {
-                    a.Sql += Concat(ov[3].(string), a.buildExpr(ov[0]), ov[1].(string), a.buildExpr(ov[2]))
+                    a.Sql += Concat(ov[3].(string), a.buildExpr(ov[0], false), ov[1].(string), a.buildExpr(ov[2], false))
                 }
             }
         }
@@ -310,6 +310,9 @@ func (a *ar)quote(s string,char ...string) string {
     if char != nil {
         quoteChar = char[0]
     }
+    if quoteChar == "" {
+        return s
+    }
     return quoteChar+strings.Replace(strings.Replace(s, a.quoteQuoteChar+quoteChar, quoteChar, -1),quoteChar, a.quoteQuoteChar+quoteChar, -1)+quoteChar
 }
 func Concat(firstWord string, words ...string) string {
@@ -327,11 +330,15 @@ func Concat(firstWord string, words ...string) string {
 func (a *ar) Exec() *ar{ 
     return a
 }
-func (a *ar) buildExpr(i interface{}) string {
+func (a *ar) buildExpr(i interface{}, isQuote ...bool) string {
     var s string
+    tmpQuoteChar := a.quoteChar
+    if len(isQuote)>0 && isQuote[0] == false{
+        tmpQuoteChar = ""
+    }
     switch i := i.(type) {
         case dbExpr: s = i.value
-        case string: s = a.quote(string(i))
+        case string: s = a.quote(string(i), tmpQuoteChar)
         case int: s = strconv.Itoa(i)
     }
     return s
@@ -341,5 +348,3 @@ func Expr(s string) dbExpr{
     expr.value = s
     return expr
 }
-
-
