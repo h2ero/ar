@@ -21,6 +21,12 @@ type join struct{
 type dbExpr struct{
     value string
 }
+
+type insert struct{
+    column            []string
+    value             []interface{}
+}
+
 type ar struct{
     DB                sql.DB
     queryType         string
@@ -35,10 +41,8 @@ type ar struct{
     offset            int
     //update,insert,delete
     talbe             string
-    column            []string
-
-    value             []interface{}
     set               map[string]interface{}
+    insert            insert
 
     Sql               string
     quoteReservedChar string
@@ -107,12 +111,12 @@ func (a *ar) OrderBy(name string, sort string) *ar{
 
 func (a *ar) Insert(table string, column ...[]string) *ar{
     a.talbe = table
-    a.column = append(a.column, column[0]...)
+    a.insert.column = append(a.insert.column, column[0]...)
     a.setQueryType("INSERT")
     return a
 }
 func (a *ar) Values(value []interface{}) *ar{
-    a.value = append(a.value, value...)
+    a.insert.value = append(a.insert.value, value...)
     return a
 }
 
@@ -269,17 +273,17 @@ func (a *ar) buildLimit() *ar{
 
 func (a *ar) buildInsert() *ar{
     a.Sql += Concat("INSERT INTO", a.quote(a.talbe, a.quoteReservedChar))
-    for k,cv := range a.column {
-        a.column[k] = a.quote(cv,a.quoteReservedChar)
+    for k,cv := range a.insert.column {
+        a.insert.column[k] = a.quote(cv,a.quoteReservedChar)
     }
-    a.Sql += Concat("(", strings.Join(a.column, ", "), ")")
+    a.Sql += Concat("(", strings.Join(a.insert.column, ", "), ")")
     return a
 }
 
 func (a *ar) buildValues() *ar{
     tmp := []string{}
     a.Sql += " VALUES "
-    for _,vv := range a.value{
+    for _,vv := range a.insert.value{
         tmp = append(tmp, a.buildExpr(vv))
     }
     a.Sql += Concat("(", strings.Join(tmp, ", "), ")")
