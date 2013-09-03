@@ -61,4 +61,16 @@ func TestMain(t *testing.T) {
     test.Select("id").From("t1").Join(Expr(subSql)).On("`t0`.`id`", "=", "`t1`.group_id").Build()
     T(test.Sql, num)
 
+
+    //test 10. where("id", "IN", []string{"1", "2"})
+    test = New()
+    test.Select("id").From("t1").Where("id", "IN", []string{"h2ero", "h2eros"}).Build()
+    t(test.Sql, &num)
+
+    //test 10. where("id", "IN", []interface{}{1, "2"})
+    test = New()
+    test.Select("id").From("t1").Where("id", "IN", []int{1, 2}).Build()
+    t(test.Sql, &num)
+
+
 }

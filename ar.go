@@ -22,6 +22,8 @@ type dbExpr struct{
     value string
 }
 
+type inList interface{}
+
 type insert struct{
     column            []string
     value             []interface{}
@@ -80,7 +82,11 @@ func (a *ar) Where(column interface{}, op string, value interface{}) *ar{
     }
     tmpWhere.column = column
     tmpWhere.op     = op
-    tmpWhere.value  = value
+    if op == "IN" {
+        tmpWhere.value  = inList(value)
+    } else {
+        tmpWhere.value  = value
+    }
     a.where         = append(a.where, tmpWhere)
     return a
 }
@@ -188,8 +194,6 @@ func (a *ar) WhereClose() *ar {
     return a
 }
 
-func (a *ar) Quote() {
-}
 func (a *ar) Build() *ar{
     switch a.queryType {
         case "SELECT": a.buildSelect().buildFrom().buildJoin().buildWhere().buildLimit().buildOrderBy()
@@ -346,6 +350,22 @@ func (a *ar) buildExpr(i interface{}, isQuote ...bool) string {
         case dbExpr: s = i.value
         case string: s = a.quote(string(i), tmpQuoteChar)
         case int: s = strconv.Itoa(i)
+        case inList: s = func (l interface{}) string{
+            list := []string{}
+            switch l := l.(type) {
+                case []int: func([]int){
+                    for _,i := range l {
+                        list = append(list, strconv.Itoa(i))
+                    }
+                }(l)
+                case []string: func([]string){
+                    for _,i := range l {
+                        list = append(list, a.quote(i))
+                    }
+                }(l)
+            }
+            return "("+strings.Join(list, ",")+")"
+        }(i)
     }
     return s
 }
