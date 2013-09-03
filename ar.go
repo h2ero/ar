@@ -1,8 +1,6 @@
 package ar
 import(
-    // "h2eroUlti/spiderUlti"
     "database/sql"
-    // _ "github.com/go-sql-driver/mysql"
     "strconv"
     "strings"
     // "fmt"
