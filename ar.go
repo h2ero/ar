@@ -40,13 +40,13 @@ type ar struct{
     set               map[string]interface{}
 
     Sql               string
-    reservedQuoteChar string
+    quoteReservedChar string
     quoteChar         string
     quoteQuoteChar    string
 }
 
 func (a *ar) init() {
-    a.reservedQuoteChar = "`"
+    a.quoteReservedChar = "`"
     a.quoteChar = "'"
     //if sqlite need set quoteQuotChar with '
     a.quoteQuoteChar = "\\"
@@ -212,7 +212,7 @@ func (a *ar) buildFrom() *ar{
     if len(a.from) != 0 {
         a.Sql += Concat("FROM")
         for k,v := range a.from{
-            a.from[k] = Concat("", a.quote(v, a.reservedQuoteChar))
+            a.from[k] = Concat("", a.quote(v, a.quoteReservedChar))
         }
         a.Sql += strings.Join(a.from, ", ")
     }
@@ -223,7 +223,7 @@ func (a *ar) buildJoin() *ar{
     // join
     if len(a.join) != 0  {
         for jk,jv := range a.join {
-            a.Sql += Concat(jv.joinType, "JOIN", a.quote(jv.table,a.reservedQuoteChar))
+            a.Sql += Concat(jv.joinType, "JOIN", a.quote(jv.table,a.quoteReservedChar))
             if len(a.join[jk].on) != 0 {
                 a.Sql += Concat("ON")
                 for _, ov := range a.join[jk].on {
@@ -267,9 +267,9 @@ func (a *ar) buildLimit() *ar{
 }
 
 func (a *ar) buildInsert() *ar{
-    a.Sql += Concat("INSERT INTO", a.quote(a.talbe, a.reservedQuoteChar))
+    a.Sql += Concat("INSERT INTO", a.quote(a.talbe, a.quoteReservedChar))
     for k,cv := range a.column {
-        a.column[k] = a.quote(cv,a.reservedQuoteChar)
+        a.column[k] = a.quote(cv,a.quoteReservedChar)
     }
     a.Sql += Concat("(", strings.Join(a.column, ", "), ")")
     return a
@@ -278,27 +278,27 @@ func (a *ar) buildInsert() *ar{
 func (a *ar) buildValues() *ar{
     a.Sql += " VALUES "
     for k,vv := range a.value{
-        a.value[k] = a.quote(vv, a.quoteChar)
+        a.value[k] = a.quote(vv)
     }
     a.Sql += Concat("(", strings.Join(a.value, ", "), ")")
     return a
 }
 
 func (a *ar) buildUpdate() *ar{
-    a.Sql += Concat("UPDATE", a.quote(a.talbe,a.reservedQuoteChar))
+    a.Sql += Concat("UPDATE", a.quote(a.talbe,a.quoteReservedChar))
     return a
 }
 func (a *ar) buildSet() *ar{
     tmp := []string{}
     a.Sql += "SET "
     for k,v := range a.set {
-        tmp = append(tmp, Concat(k, a.reservedQuoteChar, "=", a.buildExpr(v)))
+        tmp = append(tmp, Concat(a.quote(k), "=", a.buildExpr(v)))
     }
     a.Sql += strings.Join(tmp, ", ")
     return a
 }
 func (a *ar) buildDelete() *ar{
-    a.Sql += Concat("DELETE", a.quote(a.talbe , a.reservedQuoteChar))
+    a.Sql += Concat("DELETE", a.quote(a.talbe , a.quoteReservedChar))
     return a
 }
 
@@ -331,7 +331,7 @@ func (a *ar) buildExpr(i interface{}) string {
     var s string
     switch i := i.(type) {
         case dbExpr: s = i.value
-        case string: s = a.quote(string(i), a.quoteChar)
+        case string: s = a.quote(string(i))
         case int: s = strconv.Itoa(i)
     }
     return s
