@@ -36,7 +36,8 @@ type ar struct{
     //update,insert,delete
     talbe             string
     column            []string
-    value             []string
+
+    value             []interface{}
     set               map[string]interface{}
 
     Sql               string
@@ -110,7 +111,7 @@ func (a *ar) Insert(table string, column ...[]string) *ar{
     a.setQueryType("INSERT")
     return a
 }
-func (a *ar) Values(value []string) *ar{
+func (a *ar) Values(value []interface{}) *ar{
     a.value = append(a.value, value...)
     return a
 }
@@ -276,11 +277,12 @@ func (a *ar) buildInsert() *ar{
 }
 
 func (a *ar) buildValues() *ar{
+    tmp := []string{}
     a.Sql += " VALUES "
-    for k,vv := range a.value{
-        a.value[k] = a.quote(vv)
+    for _,vv := range a.value{
+        tmp = append(tmp, a.buildExpr(vv))
     }
-    a.Sql += Concat("(", strings.Join(a.value, ", "), ")")
+    a.Sql += Concat("(", strings.Join(tmp, ", "), ")")
     return a
 }
 

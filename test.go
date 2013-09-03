@@ -42,7 +42,7 @@ func main() {
 
     //test 6.
     test = ar.New()
-    test.Insert("t1", []string{"name", "date"}).Values([]string{"h2ero", "1990"}).Build();
+    test.Insert("t1", []string{"name", "date"}).Values([]interface{}{"h2ero", 1990}).Build();
     t(test.Sql, num)
 
     //test 7.
